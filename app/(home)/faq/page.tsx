@@ -45,12 +45,12 @@ export default function FAQPage() {
     <div className="min-h-screen bg-white font-sans antialiased text-slate-800">
       
       {/* ============ HERO ============ */}
-      <section className="relative bg-linear-to-br from-primary via-[#0B1329] to-[#0F1E55] pt-80 pb-24 text-white text-center overflow-hidden">
+      <section className="relative bg-linear-to-br from-primary via-[#0B1329] to-[#0F1E55] pt-40 pb-24 text-white text-center overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-orange-500/10 rounded-full blur-[120px] pointer-events-none"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125  h-125 bg-orange-500/10 rounded-full blur-[120px] pointer-events-none"
         />
         <motion.div
           initial={{ opacity: 0 }}

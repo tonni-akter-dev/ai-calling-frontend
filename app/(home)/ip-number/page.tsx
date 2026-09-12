@@ -71,8 +71,8 @@ export default function IPNumberPage() {
           </div>
 
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-5 leading-[1.15]">
-            Get a Professional
-            <span className="text-orange-500">Corporate IP Number</span> for
+            Get a Professional 
+            <span className="text-transparent bg-clip-text bg-linear-to-r ml-2 from-orange-400 to-amber-500">Corporate IP Number</span>  for
             Your Business
           </h1>
 

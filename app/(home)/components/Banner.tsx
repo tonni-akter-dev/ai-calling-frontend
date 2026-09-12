@@ -1,21 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sparkles, PhoneCall, Users, Megaphone, Wallet, PhoneMissed, Clock, Contact } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 export default function HeroBanner() {
-  const dashboardStats = [
-    { label: "Total Calls", value: "—", icon: PhoneCall },
-    { label: "Active Campaigns", value: "—", icon: Megaphone },
-    { label: "Total Contacts", value: "—", icon: Contact },
-    { label: "Available Balance", value: "—", icon: Wallet },
-    { label: "Missed Calls", value: "—", icon: PhoneMissed },
-    { label: "Call Duration", value: "—", icon: Clock },
-  ];
-
   return (
-    <section className="relative isolate overflow-hidden bg-primary px-4 pt-28 pb-20 sm:px-6 lg:px-20 lg:pt-36 lg:pb-28">
-      {/* Background Decorations */}
+    <section className="relative isolate overflow-hidden bg-primary px-4 pt-28 pb-20 sm:px-6 lg:px-20 lg:pt-40 lg:pb-25">
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute left-1/2 -top-45 h-125 w-175 -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -left-40 top-1/3 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />

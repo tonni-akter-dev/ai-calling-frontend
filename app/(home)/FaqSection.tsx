@@ -8,12 +8,9 @@ export const FaqSection: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
-    <section className="py-24 bg-linear-to-b from-white via-slate-50 to-white relative overflow-hidden">
-      <div className="text-center">
-        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10">
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-          Support & Help
-        </span>
+    <section className="py-15 bg-slate-50  to-white relative overflow-hidden">
+      <div className="text-center px-4">
+       
         <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mt-5 tracking-tight leading-[1.15]">
           Frequently Asked 
           <span className="ml-2 text-transparent bg-clip-text bg-linear-to-r from-primary to-blue-800">
@@ -22,7 +19,7 @@ export const FaqSection: React.FC = () => {
         </h2>
         <p className="text-slate-500 mt-4 text-base leading-relaxed">
           Have questions about how our IP TSP platform works, setup times, or{" "}
-          <br />
+          <br className="lg:flex hidden" />
           regulatory compliance? Find quick answers right here.
         </p>
       </div>

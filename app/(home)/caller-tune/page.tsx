@@ -117,7 +117,7 @@ export default function CallerTunePage() {
 
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-[1.15]">
             Give Your Customers a <br />
-            <span className="text-orange-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-400 to-amber-500">
               Professional First Impression
             </span>
           </h1>
