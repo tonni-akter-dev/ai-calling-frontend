@@ -1,15 +1,16 @@
-// import { NextResponse } from 'next/server';
-// import type { NextRequest } from 'next/server';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-// // Routes that don't require subscription
+// Routes that don't require subscription
 // const publicRoutes = ['/login', '/signup', '/forgot-password', '/'];
 // const subscriptionRoutes = ['/dashboard/subscription'];
 
-// export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
 //   const token = request.cookies.get('accessToken')?.value;
 //   const pathname = request.nextUrl.pathname;
 
-//   // If no token and trying to access protected route, redirect to login
+  // If no token and trying to access protected route, redirect to login
 //   if (!token && !publicRoutes.includes(pathname)) {
 //     return NextResponse.redirect(new URL('/login', request.url));
 //   }
@@ -19,7 +20,7 @@
 //     return NextResponse.redirect(new URL('/dashboard', request.url));
 //   }
 
-//   // Check subscription status for protected dashboard routes
+  // Check subscription status for protected dashboard routes
 //   if (token && pathname.startsWith('/dashboard') && !publicRoutes.includes(pathname) && !subscriptionRoutes.includes(pathname)) {
 //     try {
 //       // Fetch subscription status from API
@@ -43,19 +44,19 @@
 //     }
 //   }
 
-//   return NextResponse.next();
-// }
+  return NextResponse.next();
+}
 
-// export const config = {
-//   matcher: [
-//     /*
-//      * Match all request paths except:
-//      * - _next/static (static files)
-//      * - _next/image (image optimization files)
-//      * - favicon.ico (favicon file)
-//      * - public folder
-//      * - api routes (handled by backend)
-//      */
-//     '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
-//   ],
-// };
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     * - api routes (handled by backend)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
+  ],
+};
