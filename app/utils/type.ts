@@ -1,5 +1,8 @@
 import { Contact } from "../redux/features/apis/contactApi";
 
+// ============================================
+// Contact Types
+// ============================================
 export type ContactStatus = "Active" | "Unsubscribed" | "Bounced";
 
 export type ContactFormData = {
@@ -22,43 +25,49 @@ export interface ContactListResponse {
   metrics: ContactMetrics;
 }
 
+// ============================================
+// Voice File Types
+// (IP Call BD + DB save)
+// ============================================
 export interface VoiceFile {
-  id: number;
-  sn: number;
-  name: string;
-  campaignName: string;
-  format: string;
-  size: string;
-  url: string;
+  id: string;              // cuid (DB primary key)
+  userId: string;
+  name: string;            // voice_name
+  audioUrl: string;        // public audio URL
+  campaignId: string;      // IP Call BD campaign_id (v14_xxxxx)
+  format: string;          // MP3 / WAV / OGG / AUDIO
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface VoiceFileResponse {
-  success: boolean;
-  total: number;
+  status: "success" | "error";
   data: VoiceFile[];
+  message?: string;
 }
 
 export interface UploadVoiceFileResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: number;
-    name: string;
-    format: string;
-    size: string;
-    url: string;
-  };
+  status: "success" | "error";
+  data?: VoiceFile;
+  campaign_id?: string;    // IP Call BD থেকে পাওয়া
+  message?: string;
 }
 
 export interface DeleteVoiceFileResponse {
-  success: boolean;
-  message: string;
+  status: "success" | "error";
+  message?: string;
 }
 
 export interface VoiceFileSearchParams {
   search?: string;
-  filter?: string;
+  format?: string;
+  page?: number;
+  per_page?: number;
 }
+
+// ============================================
+// Subscription Types
+// ============================================
 export interface Subscription {
   id: number;
   company_id: number;
@@ -83,6 +92,9 @@ export interface Subscription {
   }>;
 }
 
+// ============================================
+// Support Ticket Types
+// ============================================
 export type TicketStatus = "Open" | "In Progress" | "Resolved" | "Closed";
 export type TicketPriority = "Low" | "Medium" | "High" | "Urgent";
 export type TicketCategory = "Complaint" | "Request" | "Billing";
@@ -112,6 +124,9 @@ export interface ApiTicket {
   updatedAt: string;
 }
 
+// ============================================
+// FAQ Types
+// ============================================
 export interface FaqItem {
   question: string;
   answer: string;

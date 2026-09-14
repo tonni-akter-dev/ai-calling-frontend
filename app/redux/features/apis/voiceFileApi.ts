@@ -1,8 +1,6 @@
 import {
   DeleteVoiceFileResponse,
   UploadVoiceFileResponse,
-  VoiceFileResponse,
-  VoiceFileSearchParams,
 } from "@/app/utils/type";
 import baseApi from "../../baseApi";
 import { tags } from "../../tags";
@@ -25,7 +23,7 @@ const api = baseApi.injectEndpoints({
     // =========================
     uploadVoiceFile: builder.mutation<UploadVoiceFileResponse, FormData>({
       query: (data) => ({
-        url: "/voice-files/upload",
+        url: "/voice-files",
         method: "POST",
         data,
         headers: {

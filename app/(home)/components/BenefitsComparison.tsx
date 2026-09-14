@@ -96,7 +96,7 @@ export default function BenefitsComparison() {
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-6 tracking-tight leading-[1.15]">
               Why Businesses Choose
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-blue-800">
+              <span className="ml-2 text-transparent bg-clip-text bg-linear-to-r from-primary to-blue-800">
                 aicall.bd
               </span>
             </h2>

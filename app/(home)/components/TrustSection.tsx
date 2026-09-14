@@ -1,4 +1,12 @@
-import { BadgeCheck, FileText, PhoneCall, Lock, Settings, ShieldCheck, Check } from "lucide-react";
+import {
+  BadgeCheck,
+  FileText,
+  PhoneCall,
+  Lock,
+  Settings,
+  ShieldCheck,
+  Check,
+} from "lucide-react";
 
 export default function TrustSection() {
   const trustItems = [
@@ -18,20 +26,20 @@ export default function TrustSection() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-center">
-          
           {/* Left: Headline */}
           <div className="lg:col-span-5">
             <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.15em] text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
               <ShieldCheck className="h-4 w-4" /> Trust & Reliability
             </span>
             <h2 className="text-3xl md:text-5xl font-bold text-white mt-6 tracking-tight leading-[1.15]">
-              Built for Business.{" "}
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-400 to-amber-500">
+              Built for Business. <br />
+              <span className="text-transparent bg-clip-text bg-linear-to-r  from-orange-400 to-amber-500 ml-2">
                 Designed for Simplicity.
               </span>
             </h2>
             <p className="text-blue-100/60 mt-6 text-base leading-relaxed max-w-md">
-              We focus on transparency, reliability, and clear service terms so you can focus on running your business with confidence.
+              We focus on transparency, reliability, and clear service terms so
+              you can focus on running your business with confidence.
             </p>
           </div>
 
@@ -59,7 +67,6 @@ export default function TrustSection() {
               })}
             </div>
           </div>
-
         </div>
       </div>
     </section>
