@@ -8,6 +8,7 @@ export const tags = {
   dashboard: "Dashboard",
   campaigns: "Campaigns",
   wallet: "Wallet",
+  settings: "Settings",
   contactMessages: "ContactMessages",
 } as const;
 

@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const axiosInstance = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_SERVER_URL as string}/api`,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
   timeout: 40000,
   headers: {
     "Content-Type": "application/json",
@@ -12,9 +12,10 @@ const axiosInstance = axios.create({
 // --------------------------------------------------------
 // REQUEST INTERCEPTOR (Axios v1 safe)
 // --------------------------------------------------------
+
+
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Guard for SSR (important for Next.js App Router)
     if (typeof window === "undefined") {
       return config;
     }

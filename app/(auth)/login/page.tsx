@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/no-unescaped-entities */
 "use client";
 
 import React, { useState } from "react";
@@ -15,8 +14,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Cookies from "js-cookie";
-
 import { useLoginMutation } from "@/app/redux/features/apis/auth-api";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,10 +51,6 @@ export default function LoginPage() {
 
       console.log("Login response:", response);
 
-      // ==========================================
-      // SAVE ACCESS TOKEN IN COOKIE
-      // ==========================================
-
       if (response?.token) {
         Cookies.set("accessToken", response.token, {
           expires: 7,
@@ -63,10 +58,6 @@ export default function LoginPage() {
           sameSite: "lax",
         });
       }
-
-      // ==========================================
-      // SAVE USER DATA IN COOKIE
-      // ==========================================
 
       if (response?.user) {
         Cookies.set(
@@ -79,17 +70,7 @@ export default function LoginPage() {
           }
         );
       }
-
-      // ==========================================
-      // SUCCESS MESSAGE
-      // ==========================================
-
       toast.success(response?.message || "Login successful!");
-
-      // ==========================================
-      // REDIRECT BASED ON USER ROLE
-      // ==========================================
-
       const userRole = response?.user?.role;
 
       if (userRole === "super_admin") {

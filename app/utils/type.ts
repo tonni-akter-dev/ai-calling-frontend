@@ -79,11 +79,23 @@ export interface Subscription {
   created_at: string;
   updated_at: string;
   plan_name: string;
-  price_bdt: number;
+  price_bdt: number | string;
   monthly_call_limit: number;
   max_concurrent_calls: number;
   company_name: string;
   company_email: string;
+
+  // 🆕 from API
+  wallet_balance_bdt?: string | number;
+
+  // 🆕 computed wallet block
+  wallet?: {
+    balance: number;
+    total_added: number;
+    total_used: number;
+    currency: string;
+  };
+
   users: Array<{
     id: number;
     name: string;

@@ -1,550 +1,458 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Settings,
-  Globe,
-  PhoneCall,
-  CreditCard,
-  Bell,
-  ShieldCheck,
-  Database,
-  Save,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  AlertTriangle,
-  Lock,
+  User,
   Mail,
   Smartphone,
-  Clock,
-  Zap,
-  Wallet,
-  KeyRound,
+  Key,
+  Save,
+  Eye,
+  EyeOff,
+  Loader2,
+  ShieldCheck,
   RefreshCw,
+  Clock,
+  Layers,
+  Lock,
 } from "lucide-react";
-
+import { toast } from "sonner";
+import { authHeaders } from "@/app/lib/authToken";
 import PageHeader from "../components/PageHeader";
 
-type SettingsSection =
-  | "general"
-  | "calls"
-  | "payments"
-  | "notifications"
-  | "security"
-  | "system";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+interface ProfileData {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface IpcallSettings {
+  hasApiKey: boolean;
+  maskedApiKey: string;
+  delaySeconds: number;
+  maxBatchSize: number;
+  updatedAt: string | null;
+}
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] =
-    useState<SettingsSection>("general");
+  const [profile, setProfile] = useState<ProfileData>({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [maskedApiKey, setMaskedApiKey] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
+  const [delaySeconds, setDelaySeconds] = useState(38);
+  const [maxBatchSize, setMaxBatchSize] = useState(20);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [keySaving, setKeySaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const [saved, setSaved] = useState(false);
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      // ✅ FIX: /api prefix added
+      const profileRes = await fetch(`${API_BASE}/auth/me`, {
+        cache: "no-store",
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      const profileJson = await profileRes.json();
+      if (profileRes.ok && profileJson.success && profileJson.data) {
+        setProfile({
+          name: profileJson.data.name || "",
+          email: profileJson.data.email || "",
+          phone: profileJson.data.phone || "",
+        });
+      }
 
-  const handleSave = () => {
-    setSaved(true);
+      // ✅ FIX: /api prefix added
+      const keyRes = await fetch(`${API_BASE}/admin/settings/ipcall`, {
+        cache: "no-store",
+        credentials: "include",
+        headers: authHeaders(),
+      });
+      const keyJson = await keyRes.json();
+      if (keyRes.ok && keyJson.success && keyJson.data) {
+        const d: IpcallSettings = keyJson.data;
+        setHasApiKey(d.hasApiKey);
+        setMaskedApiKey(d.maskedApiKey);
+        setDelaySeconds(d.delaySeconds);
+        setMaxBatchSize(d.maxBatchSize);
+        setUpdatedAt(d.updatedAt);
+      }
+    } catch (err: any) {
+      console.error("load error:", err?.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    setTimeout(() => {
-      setSaved(false);
-    }, 2500);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // ============================================
+  // Save Profile
+  // ============================================
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!profile.name.trim()) return toast.error("Please enter your name");
+    if (!profile.email.trim()) return toast.error("Please enter your email");
+
+    setProfileSaving(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/update-profile`, {
+        method: "PUT",
+        credentials: "include",
+        headers: authHeaders(),
+        body: JSON.stringify(profile),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to update profile");
+      }
+
+      toast.success("Profile updated successfully!");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update profile");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  // ============================================
+  // Save API Key Settings
+  // ============================================
+  const handleApiKeySave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setKeySaving(true);
+
+    try {
+      const body: any = {
+        delaySeconds,
+        maxBatchSize,
+      };
+
+      if (apiKey.trim()) {
+        if (apiKey.trim().length < 20) {
+          throw new Error("API key looks too short");
+        }
+        body.apiKey = apiKey.trim();
+      }
+
+      const res = await fetch(`${API_BASE}/admin/settings/ipcall`, {
+        method: "PUT",
+        credentials: "include",
+        headers: authHeaders(),
+        body: JSON.stringify(body),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to save settings");
+      }
+
+      toast.success("API settings saved!");
+      setApiKey("");
+      setShowKey(false);
+      await load();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save settings");
+    } finally {
+      setKeySaving(false);
+    }
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-10 max-w-4xl">
       <PageHeader
         title="Settings"
-        description="Manage platform configuration, calls, payments, notifications and security."
+        description="Manage your profile and IPCall API configuration."
       />
 
-      {/* Save notification */}
-      {saved && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          <CheckCircle2 className="h-5 w-5" />
-          Settings saved successfully.
+      {loading ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-16 text-center">
+          <Loader2 className="w-6 h-6 animate-spin inline text-slate-400" />
         </div>
+      ) : (
+        <>
+          {/* ==========================================
+              PROFILE CARD
+          ========================================== */}
+          <form
+            onSubmit={handleProfileSave}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+          >
+            <CardHeader
+              icon={<User className="h-5 w-5" />}
+              title="Profile"
+              description="Your personal information."
+            />
+
+            <div className="p-5 sm:p-6 space-y-5">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <InputField
+                  label="Full Name"
+                  value={profile.name}
+                  onChange={(v) => setProfile((p) => ({ ...p, name: v }))}
+                  placeholder="Your name"
+                  icon={<User className="h-4 w-4" />}
+                />
+
+                <InputField
+                  label="Email Address"
+                  type="email"
+                  value={profile.email}
+                  onChange={(v) => setProfile((p) => ({ ...p, email: v }))}
+                  placeholder="you@example.com"
+                  icon={<Mail className="h-4 w-4" />}
+                />
+
+                <InputField
+                  label="Phone Number"
+                  value={profile.phone}
+                  onChange={(v) => setProfile((p) => ({ ...p, phone: v }))}
+                  placeholder="01XXXXXXXXX"
+                  icon={<Smartphone className="h-4 w-4" />}
+                />
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={profileSaving}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition disabled:opacity-60"
+                >
+                  {profileSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Profile
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          {/* ==========================================
+              API KEY CARD
+          ========================================== */}
+          <form
+            onSubmit={handleApiKeySave}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+          >
+            <CardHeader
+              icon={<Key className="h-5 w-5" />}
+              title="IPCall API Configuration"
+              description="Your secret API credentials for voice calling."
+            />
+
+            <div className="p-5 sm:p-6 space-y-6">
+              {/* Warning if no key */}
+              {!hasApiKey && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex gap-3">
+                  <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-amber-900">
+                      No API key configured
+                    </p>
+                    <p className="text-xs text-amber-700 mt-0.5">
+                      Voice calls won&apos;t work until you add your IPCall API
+                      key below.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Current masked key */}
+              {hasApiKey && (
+                <div className="px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-4 h-4 text-emerald-600" />
+                    <span className="font-mono text-sm text-slate-600">
+                      Current:{" "}
+                      <span className="font-bold text-slate-800">
+                        {maskedApiKey}
+                      </span>
+                    </span>
+                  </div>
+                  {updatedAt && (
+                    <span className="text-xs text-slate-400">
+                      Updated {new Date(updatedAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* API Key input */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  API Key
+                </label>
+
+                <div className="relative">
+                  <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    <Key className="h-4 w-4" />
+                  </div>
+
+                  <input
+                    type={showKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder={
+                      hasApiKey
+                        ? "Enter new key to replace (leave blank to keep)"
+                        : "Paste your IPCall API key here"
+                    }
+                    autoComplete="off"
+                    className="h-11 w-full pl-10 pr-12 rounded-xl border border-slate-200 bg-white text-sm font-mono text-slate-900 outline-none transition placeholder:text-slate-400 placeholder:font-sans focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowKey((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                    tabIndex={-1}
+                  >
+                    {showKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  🔒 Encrypted in database and never shown to the browser.
+                </p>
+              </div>
+
+              {/* Delay + Batch Size */}
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 pt-2 border-t border-slate-100">
+                <div className="pt-4">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Delay Between Calls (Seconds)
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Clock className="h-4 w-4" />
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={600}
+                      value={delaySeconds}
+                      onChange={(e) => setDelaySeconds(Number(e.target.value))}
+                      className="h-11 w-full pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Time to wait before next call request.
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Maximum Batch Size
+                  </label>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      <Layers className="h-4 w-4" />
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={maxBatchSize}
+                      onChange={(e) => setMaxBatchSize(Number(e.target.value))}
+                      className="h-11 w-full pl-10 pr-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Numbers queued at once. Recommended: 20.
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={keySaving}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition disabled:opacity-60"
+                >
+                  {keySaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save API Settings
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={load}
+                  disabled={loading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-semibold text-slate-700 transition"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Reload
+                </button>
+              </div>
+            </div>
+          </form>
+        </>
       )}
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-        {/* Sidebar */}
-        <SettingsSidebar
-          activeSection={activeSection}
-          onChange={setActiveSection}
-        />
-
-        {/* Content */}
-        <div className="min-w-0">
-          {activeSection === "general" && (
-            <GeneralSettings onSave={handleSave} />
-          )}
-
-          {activeSection === "calls" && (
-            <CallSettings onSave={handleSave} />
-          )}
-
-          {activeSection === "payments" && (
-            <PaymentSettings onSave={handleSave} />
-          )}
-
-    
-
-        </div>
-      </div>
     </div>
   );
 }
 
 /* =========================================================
-   SETTINGS SIDEBAR
+   SMALL COMPONENTS
 ========================================================= */
 
-function SettingsSidebar({
-  activeSection,
-  onChange,
-}: {
-  activeSection: SettingsSection;
-  onChange: (section: SettingsSection) => void;
-}) {
-  const items: {
-    id: SettingsSection;
-    label: string;
-    description: string;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      id: "general",
-      label: "General",
-      description: "Platform information",
-      icon: <Globe className="h-4 w-4" />,
-    },
-    {
-      id: "calls",
-      label: "Call Settings",
-      description: "Voice call configuration",
-      icon: <PhoneCall className="h-4 w-4" />,
-    },
-    {
-      id: "payments",
-      label: "Payments",
-      description: "Wallet & bKash",
-      icon: <CreditCard className="h-4 w-4" />,
-    },
-
-  ];
-
-  return (
-    <div className="h-fit rounded-2xl border border-slate-200 bg-white p-2">
-      <div className="px-3 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-900 text-white">
-            <Settings className="h-4 w-4" />
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold text-slate-900">
-              Settings
-            </p>
-            <p className="text-xs text-slate-400">
-              Platform configuration
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-1">
-        {items.map((item) => {
-          const active = activeSection === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => onChange(item.id)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
-                active
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                  active
-                    ? "bg-white/10 text-white"
-                    : "bg-slate-100 text-slate-500"
-                }`}
-              >
-                {item.icon}
-              </div>
-
-              <div className="min-w-0">
-                <p
-                  className={`text-sm font-semibold ${
-                    active ? "text-white" : "text-slate-700"
-                  }`}
-                >
-                  {item.label}
-                </p>
-
-                <p
-                  className={`mt-0.5 truncate text-xs ${
-                    active ? "text-slate-300" : "text-slate-400"
-                  }`}
-                >
-                  {item.description}
-                </p>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   GENERAL SETTINGS
-========================================================= */
-
-function GeneralSettings({
-  onSave,
-}: {
-  onSave: () => void;
-}) {
-  const [siteName, setSiteName] = useState("VoiceCall BD");
-  const [siteUrl, setSiteUrl] = useState("https://voicecallbd.com");
-  const [supportEmail, setSupportEmail] =
-    useState("support@voicecallbd.com");
-  const [supportPhone, setSupportPhone] =
-    useState("01700000000");
-  const [timezone, setTimezone] =
-    useState("Asia/Dhaka");
-
-  return (
-    <SettingsCard
-      title="General Settings"
-      description="Configure basic information about your platform."
-      icon={<Globe className="h-5 w-5" />}
-      onSave={onSave}
-    >
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <InputField
-          label="Platform Name"
-          value={siteName}
-          onChange={setSiteName}
-          placeholder="Enter platform name"
-        />
-
-        <InputField
-          label="Platform URL"
-          value={siteUrl}
-          onChange={setSiteUrl}
-          placeholder="https://example.com"
-        />
-
-        <InputField
-          label="Support Email"
-          value={supportEmail}
-          onChange={setSupportEmail}
-          placeholder="support@example.com"
-          icon={<Mail className="h-4 w-4" />}
-        />
-
-        <InputField
-          label="Support Phone"
-          value={supportPhone}
-          onChange={setSupportPhone}
-          placeholder="01XXXXXXXXX"
-          icon={<Smartphone className="h-4 w-4" />}
-        />
-
-    
-
-      </div>
-
-
-    </SettingsCard>
-  );
-}
-
-/* =========================================================
-   CALL SETTINGS
-========================================================= */
-
-function CallSettings({
-  onSave,
-}: {
-  onSave: () => void;
-}) {
-  const [maxCalls, setMaxCalls] = useState("100");
-  const [callTimeout, setCallTimeout] = useState("30");
-  const [retryAttempts, setRetryAttempts] = useState("2");
-
-  return (
-    <SettingsCard
-      title="Call Settings"
-      description="Configure bulk voice calling behavior and limits."
-      icon={<PhoneCall className="h-5 w-5" />}
-      onSave={onSave}
-    >
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-blue-100 p-2 text-primary">
-            <Zap className="h-4 w-4" />
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-blue-900">
-              Voice Call Configuration
-            </h3>
-
-            <p className="mt-1 text-xs leading-5 text-blue-700">
-              These settings control how bulk campaigns are processed
-              across the platform.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <InputField
-          label="Maximum Numbers Per Campaign"
-          value={maxCalls}
-          onChange={setMaxCalls}
-          type="number"
-          icon={<PhoneCall className="h-4 w-4" />}
-        />
-
-        <InputField
-          label="Call Timeout (Seconds)"
-          value={callTimeout}
-          onChange={setCallTimeout}
-          type="number"
-          icon={<Clock className="h-4 w-4" />}
-        />
-
-        <InputField
-          label="Retry Attempts"
-          value={retryAttempts}
-          onChange={setRetryAttempts}
-          type="number"
-          icon={<RefreshCw className="h-4 w-4" />}
-        />
-
-        <SelectField
-          label="Call Queue Mode"
-          value="Sequential"
-          onChange={() => {}}
-          options={[
-            "Sequential",
-            "Parallel",
-            "Auto",
-          ]}
-        />
-      </div>
-
-      <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
-        <ToggleCard
-          title="Allow Bulk Calling"
-          description="Allow customers to start bulk voice campaigns."
-          defaultChecked
-        />
-
-        <ToggleCard
-          title="Automatic Retry"
-          description="Retry calls that fail or are temporarily unavailable."
-          defaultChecked
-        />
-
-        <ToggleCard
-          title="Call Recording"
-          description="Enable recording where supported and legally permitted."
-          defaultChecked
-        />
-
-        <ToggleCard
-          title="Prevent Duplicate Numbers"
-          description="Automatically remove duplicate numbers from campaigns."
-          defaultChecked
-        />
-      </div>
-    </SettingsCard>
-  );
-}
-
-/* =========================================================
-   PAYMENT SETTINGS
-========================================================= */
-
-function PaymentSettings({
-  onSave,
-}: {
-  onSave: () => void;
-}) {
-  const [bkashNumber, setBkashNumber] =
-    useState("01700000000");
-
-  const [minimumPayment, setMinimumPayment] =
-    useState("100");
-
-  const [creditRate, setCreditRate] =
-    useState("1");
-
-  return (
-    <SettingsCard
-      title="Payment & Wallet Settings"
-      description="Configure bKash payments, credits and platform wallet."
-      icon={<CreditCard className="h-5 w-5" />}
-      onSave={onSave}
-    >
-      <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-        <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600">
-            <Wallet className="h-4 w-4" />
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-emerald-900">
-              Platform Wallet
-            </h3>
-
-            <p className="mt-1 text-xs leading-5 text-emerald-700">
-              Customer payments are added to the platform wallet.
-              Only Super Admin can withdraw platform funds.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-        <InputField
-          label="bKash Merchant / Payment Number"
-          value={bkashNumber}
-          onChange={setBkashNumber}
-          placeholder="01XXXXXXXXX"
-          icon={<Smartphone className="h-4 w-4" />}
-        />
-
-        <InputField
-          label="Minimum Payment"
-          value={minimumPayment}
-          onChange={setMinimumPayment}
-          type="number"
-          icon={<CreditCard className="h-4 w-4" />}
-        />
-
-        <InputField
-          label="Credits Per BDT"
-          value={creditRate}
-          onChange={setCreditRate}
-          type="number"
-          icon={<Wallet className="h-4 w-4" />}
-        />
-
-        <SelectField
-          label="Currency"
-          value="BDT"
-          onChange={() => {}}
-          options={[
-            "BDT",
-            "USD",
-          ]}
-        />
-      </div>
-
-      <div className="mt-6 border-t border-slate-200 pt-6">
-        <h3 className="text-sm font-semibold text-slate-900">
-          Payment Methods
-        </h3>
-
-        <div className="mt-4 space-y-4">
-          <ToggleCard
-            title="bKash"
-            description="Allow customers to add credits using bKash."
-            defaultChecked
-          />
-
-          <ToggleCard
-            title="Manual Payment"
-            description="Allow admin-approved manual payment requests."
-            defaultChecked
-          />
-
-          <ToggleCard
-            title="Automatic Payment Verification"
-            description="Automatically verify supported payment transactions."
-            defaultChecked
-          />
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-600" />
-
-          <div>
-            <p className="text-sm font-semibold text-amber-900">
-              Withdrawal Permission
-            </p>
-
-            <p className="mt-1 text-xs leading-5 text-amber-700">
-              Platform wallet withdrawal must remain restricted to
-              Super Admin accounts.
-            </p>
-          </div>
-        </div>
-      </div>
-    </SettingsCard>
-  );
-}
-
-function SettingsCard({
+function CardHeader({
+  icon,
   title,
   description,
-  icon,
-  children,
-  onSave,
 }: {
+  icon: React.ReactNode;
   title: string;
   description: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  onSave: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-      {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-            {icon}
-          </div>
-
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              {title}
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              {description}
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={onSave}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-          <Save className="h-4 w-4" />
-          Save Changes
-        </button>
+    <div className="flex items-start gap-3 border-b border-slate-200 px-5 py-5 sm:px-6">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 shrink-0">
+        {icon}
       </div>
-
-      {/* Content */}
-      <div className="p-5 sm:p-6">{children}</div>
+      <div>
+        <h2 className="text-base font-bold text-slate-900">{title}</h2>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
+      </div>
     </div>
   );
 }
-
-/* =========================================================
-   INPUT
-========================================================= */
 
 function InputField({
   label,
@@ -584,140 +492,6 @@ function InputField({
           }`}
         />
       </div>
-    </div>
-  );
-}
-
-/* =========================================================
-   SELECT
-========================================================= */
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: string[];
-}) {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        {label}
-      </label>
-
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-/* =========================================================
-   TOGGLE
-========================================================= */
-
-function ToggleCard({
-  title,
-  description,
-  defaultChecked = false,
-  danger = false,
-}: {
-  title: string;
-  description: string;
-  defaultChecked?: boolean;
-  danger?: boolean;
-}) {
-  const [checked, setChecked] =
-    useState(defaultChecked);
-
-  return (
-    <div
-      className={`flex items-center justify-between gap-4 rounded-xl border p-4 ${
-        danger
-          ? "border-red-200 bg-red-50/40"
-          : "border-slate-200 bg-white"
-      }`}
-    >
-      <div className="min-w-0">
-        <p
-          className={`text-sm font-semibold ${
-            danger ? "text-red-800" : "text-slate-800"
-          }`}
-        >
-          {title}
-        </p>
-
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          {description}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setChecked(!checked)}
-        aria-label={`Toggle ${title}`}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-          checked
-            ? danger
-              ? "bg-red-600"
-              : "bg-slate-900"
-            : "bg-slate-200"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-            checked ? "left-[22px]" : "left-0.5"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
-/* =========================================================
-   SYSTEM STAT
-========================================================= */
-
-function SystemStat({
-  title,
-  value,
-  icon,
-}: {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-      <div className="flex items-center justify-between">
-        <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
-          {icon}
-        </div>
-
-        <span className="text-xs font-medium text-emerald-600">
-          Healthy
-        </span>
-      </div>
-
-      <p className="mt-4 text-xs font-medium text-slate-500">
-        {title}
-      </p>
-
-      <p className="mt-1 text-sm font-bold text-slate-900">
-        {value}
-      </p>
     </div>
   );
 }

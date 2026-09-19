@@ -1,13 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import {
-  Users,
-  CreditCard,
-  Wallet,
-  PhoneCall,
-  TrendingUp,
-} from "lucide-react";
+import { Users, CreditCard, Wallet, PhoneCall, TrendingUp } from "lucide-react";
 import StatCard from "./components/StatCard";
 import { useGetDashboardStatsQuery } from "@/app/redux/features/apis/dashboardApi";
 import { Key } from "react";
@@ -28,8 +22,8 @@ export default function SuperAdminDashboard() {
 
   // Format number
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
     return num.toString();
   };
 
@@ -49,16 +43,15 @@ export default function SuperAdminDashboard() {
       <div className="mx-auto max-w-375 space-y-6">
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
           <p>
-            Error loading dashboard: {
-              error &&
-              typeof error === "object" &&
-              "data" in error &&
-              typeof error.data === "object" &&
-              error.data !== null &&
-              "error" in error.data
-                ? String(error.data.error)
-                : "Something went wrong"
-            }
+            Error loading dashboard:{" "}
+            {error &&
+            typeof error === "object" &&
+            "data" in error &&
+            typeof error.data === "object" &&
+            error.data !== null &&
+            "error" in error.data
+              ? String(error.data.error)
+              : "Something went wrong"}
           </p>
         </div>
       </div>
@@ -138,17 +131,24 @@ export default function SuperAdminDashboard() {
 
           <div className="mt-6 space-y-5">
             {plan_distribution && plan_distribution.length > 0 ? (
-              plan_distribution.map((plan: {
-                price_bdt: number; plan_name: string; count: number 
-}) => (
-                <PlanRow
-                  key={plan.plan_name}
-                  name={plan.plan_name}
-                  users={formatNumber(plan.count)}
-                  percentage={((plan.count / overview.active_subscriptions) * 100).toFixed(0)}
-                  price={plan.price_bdt}
-                />
-              ))
+              plan_distribution.map(
+                (plan: {
+                  price_bdt: number;
+                  plan_name: string;
+                  count: number;
+                }) => (
+                  <PlanRow
+                    key={plan.plan_name}
+                    name={plan.plan_name}
+                    users={formatNumber(plan.count)}
+                    percentage={(
+                      (plan.count / overview.active_subscriptions) *
+                      100
+                    ).toFixed(0)}
+                    price={plan.price_bdt}
+                  />
+                ),
+              )
             ) : (
               <p className="text-sm text-slate-500">No active subscriptions</p>
             )}
@@ -159,9 +159,7 @@ export default function SuperAdminDashboard() {
         <div className="rounded-xl border border-slate-200 bg-white p-5 xl:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-slate-900">
-                Revenue Overview
-              </h3>
+              <h3 className="font-semibold text-slate-900">Revenue Overview</h3>
 
               <p className="mt-1 text-xs text-slate-500">
                 Subscription revenue (last 12 months)
@@ -174,30 +172,41 @@ export default function SuperAdminDashboard() {
           <div className="mt-8 flex h-48 items-end gap-3">
             {revenue?.monthly_chart && revenue.monthly_chart.length > 0 ? (
               (() => {
-                const maxRevenue = Math.max(...revenue.monthly_chart.map((r: { revenue: any; }) => r.revenue), 1);
-                
-                return revenue.monthly_chart.map((item: { revenue: number; month: string }, index: Key | null | undefined) => {
-                  const height = ((item.revenue / maxRevenue) * 100);
-                  const isCurrentMonth = index === revenue.monthly_chart.length - 1;
-                  
-                  return (
-                    <div
-                      key={index}
-                      className="group flex flex-1 flex-col justify-end"
-                    >
+                const maxRevenue = Math.max(
+                  ...revenue.monthly_chart.map(
+                    (r: { revenue: any }) => r.revenue,
+                  ),
+                  1,
+                );
+
+                return revenue.monthly_chart.map(
+                  (
+                    item: { revenue: number; month: string },
+                    index: Key | null | undefined,
+                  ) => {
+                    const height = (item.revenue / maxRevenue) * 100;
+                    const isCurrentMonth =
+                      index === revenue.monthly_chart.length - 1;
+
+                    return (
                       <div
-                        style={{ height: `${Math.max(height, 5)}%` }}
-                        className={`rounded-t-md transition group-hover:opacity-80 ${
-                          isCurrentMonth ? 'bg-primary' : 'bg-blue-400'
-                        }`}
-                      />
-                      
-                      <span className="mt-2 text-center text-[9px] text-slate-400">
-                        {item.month}
-                      </span>
-                    </div>
-                  );
-                });
+                        key={index}
+                        className="group flex flex-1 flex-col justify-end"
+                      >
+                        <div
+                          style={{ height: `${Math.max(height, 5)}%` }}
+                          className={`rounded-t-md transition group-hover:opacity-80 ${
+                            isCurrentMonth ? "bg-primary" : "bg-blue-400"
+                          }`}
+                        />
+
+                        <span className="mt-2 text-center text-[9px] text-slate-400">
+                          {item.month}
+                        </span>
+                      </div>
+                    );
+                  },
+                );
               })()
             ) : (
               <div className="w-full text-center text-sm text-slate-500">
@@ -228,17 +237,11 @@ function PlanRow({
     <div>
       <div className="mb-2 flex items-center justify-between text-sm">
         <div>
-          <span className="font-medium text-slate-700">
-            {name}
-          </span>
-          <span className="ml-2 text-xs text-slate-400">
-            ৳{price}/mo
-          </span>
+          <span className="font-medium text-slate-700">{name}</span>
+          <span className="ml-2 text-xs text-slate-400">৳{price}/mo</span>
         </div>
 
-        <span className="text-xs text-slate-500">
-          {users} users
-        </span>
+        <span className="text-xs text-slate-500">{users} users</span>
       </div>
 
       <div className="h-2 overflow-hidden rounded-full bg-slate-100">

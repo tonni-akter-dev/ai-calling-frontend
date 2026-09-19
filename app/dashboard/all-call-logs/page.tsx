@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -23,7 +24,7 @@ import {
 } from "lucide-react";
 import { authHeaders } from "@/app/lib/authToken";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 interface CallLog {
   id: number;
@@ -117,7 +118,6 @@ export default function AllCallLogsPage() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, perPage]);
 
   // ============================================

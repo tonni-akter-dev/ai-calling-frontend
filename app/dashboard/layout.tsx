@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   PhoneCall,
@@ -12,62 +12,79 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   ChevronDown,
   Phone,
-  User,
-  AlertCircle,
-  CheckCircle2,
   FileAudio,
   ListOrdered,
   Headphones,
   Wallet,
   History,
   Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import { ReduxProvider } from "../redux/Providers";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
 import { useGetWalletBalanceQuery } from "@/app/redux/features/apis/walletApi";
+import { authHeaders } from "@/app/lib/authToken";
 
-// ===== USER INFO COMPONENT =====
-function UserInfo() {
-  // এখানে আপনার user data fetch করার API যোগ করুন
-  // উদাহরণ: const { data: userData } = useGetUserQuery();
-  
-  // ডেমো ডাটা (আসল API থেকে fetch করবেন)
-  const userData = {
-    name: "Admin User",
-    email: "admin@ipcallbd.com",
-    avatar: "A",
-  };
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
+// ============================================
+// Types
+// ============================================
+interface MeData {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  company_id: number;
+  company_name: string;
+}
+
+// ============================================
+// User Info Component
+// ============================================
+function UserInfo({ me }: { me: MeData | null }) {
+  if (!me) {
+    return (
+      <div className="flex items-center space-x-3">
+        <div className="w-8 h-8 rounded-full bg-slate-700 animate-pulse" />
+        <div className="hidden md:block">
+          <div className="h-3 w-20 bg-slate-700 rounded animate-pulse" />
+          <div className="h-2 w-24 bg-slate-700 rounded animate-pulse mt-1" />
+        </div>
+      </div>
+    );
+  }
+
+  const initial = me.name?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <div className="flex items-center space-x-3">
       <div className="w-8 h-8 rounded-full bg-linear-to-r from-primary to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow-sm border border-blue-400/30">
-        {userData.avatar}
+        {initial}
       </div>
       <div className="hidden md:block text-left">
         <p className="text-xs font-bold text-white truncate max-w-25">
-          {userData.name}
+          {me.name}
         </p>
         <p className="text-[10px] text-slate-400 truncate max-w-25">
-          {userData.email}
+          {me.email}
         </p>
       </div>
     </div>
   );
 }
 
-// ===== BALANCE DISPLAY COMPONENT =====
+// ============================================
+// Balance Display
+// ============================================
 function BalanceDisplay() {
   const { data: walletData, isLoading, refetch } = useGetWalletBalanceQuery();
-  
-  // Auto-refetch every 30 seconds
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      refetch();
-    }, 30000);
-    
+    const interval = setInterval(() => refetch(), 30000);
     return () => clearInterval(interval);
   }, [refetch]);
 
@@ -76,7 +93,9 @@ function BalanceDisplay() {
       <div className="hidden sm:flex items-center space-x-2 bg-slate-900 border border-slate-700/80 px-3.5 py-1.5 rounded-full text-xs">
         <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />
         <span className="text-slate-400 font-medium">Balance:</span>
-        <span className="text-emerald-400 font-bold animate-pulse">Loading...</span>
+        <span className="text-emerald-400 font-bold animate-pulse">
+          Loading...
+        </span>
       </div>
     );
   }
@@ -93,11 +112,13 @@ function BalanceDisplay() {
           {currency} {balance.toFixed(2)}
         </span>
       </div>
-     
     </div>
   );
 }
 
+// ============================================
+// Main Layout
+// ============================================
 export default function DashboardLayout({
   children,
 }: {
@@ -106,12 +127,49 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
-
+  const [me, setMe] = useState<MeData | null>(null);
+  const [meLoading, setMeLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Close profile dropdown when clicking outside
+  // ============================================
+  // Fetch current user
+  // ============================================
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          cache: "no-store",
+          credentials: "include",
+          headers: authHeaders(),
+        });
+        const json = await res.json();
+
+        if (mounted && res.ok && json.success && json.data) {
+          setMe(json.data);
+        } else if (res.status === 401) {
+          // Not logged in → redirect
+          router.push("/login");
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
+      } finally {
+        if (mounted) setMeLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
+
+  // ============================================
+  // Click outside handlers
+  // ============================================
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -125,7 +183,6 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close notifications dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -139,73 +196,74 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Mock notifications state
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: "Bulk Campaign Finished",
-      message: "Eid Promo Broadcast completed with 94% delivery rate.",
-      time: "5m ago",
-      read: false,
-      icon: (
-        <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
-          <CheckCircle2 className="w-4 h-4" />
-        </div>
-      ),
-    },
-    {
-      id: 2,
-      title: "Low Talk-Time Balance",
-      message:
-        "Your current balance is ৳ 1,250. Recharge soon to avoid service interruption.",
-      time: "1h ago",
-      read: false,
-      icon: (
-        <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">
-          <AlertCircle className="w-4 h-4" />
-        </div>
-      ),
-    },
-    {
-      id: 3,
-      title: "SIP Trunk Re-connected",
-      message: "Primary IPTSP server extension 101 restored connection.",
-      time: "3h ago",
-      read: true,
-      icon: (
-        <div className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400">
-          <PhoneCall className="w-4 h-4" />
-        </div>
-      ),
-    },
-  ]);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  // ============================================
+  // Logout
+  // ============================================
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: authHeaders(),
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      // Clear cookies
+      document.cookie =
+        "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      router.push("/login");
+    }
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
+  // ============================================
+  // Navigation
+  // ============================================
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Manage Contact", href: "/dashboard/manage-contacts", icon: Users },
     { name: "Send Voice Call", href: "/dashboard/voice-call", icon: PhoneCall },
     { name: "Calls History", href: "/dashboard/calls-history", icon: History },
-    { name: "Manage Voice File", href: "/dashboard/manage-voice-file", icon: FileAudio },
-    { name: "All Call Logs", href: "/dashboard/all-call-logs", icon: ListOrdered },
+    {
+      name: "Manage Voice File",
+      href: "/dashboard/manage-voice-file",
+      icon: FileAudio,
+    },
+    {
+      name: "All Call Logs",
+      href: "/dashboard/all-call-logs",
+      icon: ListOrdered,
+    },
     { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
     { name: "Credit", href: "/dashboard/credit", icon: Wallet },
-    { name: "Support Ticket", href: "/dashboard/support-ticket", icon: Headphones },
+    {
+      name: "Support Ticket",
+      href: "/dashboard/support-ticket",
+      icon: Headphones,
+    },
   ];
 
-  // Get current page name
-  const currentPage = navigation.find((n) => n.href === pathname)?.name || "Dashboard";
+  const currentPage =
+    navigation.find((n) => n.href === pathname)?.name || "Dashboard";
+
+  // Role display
+  const getRoleLabel = (role: string) => {
+    if (role === "super_admin") return "Super Admin";
+    if (role === "admin") return "Admin";
+    if (role === "user") return "User";
+    return role;
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    if (role === "super_admin")
+      return "bg-purple-500/20 text-purple-300 border-purple-500/30";
+    if (role === "admin")
+      return "bg-blue-500/20 text-blue-300 border-blue-500/30";
+    return "bg-slate-500/20 text-slate-300 border-slate-500/30";
+  };
+
+  const userInitial = me?.name?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <ReduxProvider>
@@ -221,13 +279,13 @@ export default function DashboardLayout({
           onClick={() => setSidebarOpen(false)}
         />
 
-        {/* Sidebar Navigation */}
+        {/* Sidebar */}
         <aside
           className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-[#1e293b] border-r border-slate-700/80 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          {/* Brand Header */}
+          {/* Brand */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-slate-700/80 bg-[#1e293b]">
             <Link href="/dashboard" className="flex items-center space-x-2.5">
               <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-primary to-indigo-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
@@ -246,7 +304,7 @@ export default function DashboardLayout({
             </button>
           </div>
 
-          {/* Navigation Links */}
+          {/* Nav */}
           <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
@@ -263,7 +321,9 @@ export default function DashboardLayout({
                   }`}
                 >
                   <Icon
-                    className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-400"}`}
+                    className={`w-4 h-4 ${
+                      isActive ? "text-white" : "text-slate-400"
+                    }`}
                   />
                   <span>{item.name}</span>
                 </Link>
@@ -271,34 +331,47 @@ export default function DashboardLayout({
             })}
           </nav>
 
-          {/* Sidebar Footer User Card */}
+          {/* Sidebar Footer — 🆕 Real user data */}
           <div className="p-4 border-t border-slate-700/80 bg-[#1e293b]">
             <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-700/80">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 text-blue-400 flex items-center justify-center font-bold text-xs border border-blue-500/30">
-                  AD
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-primary/20 text-blue-400 flex items-center justify-center font-bold text-xs border border-blue-500/30 shrink-0">
+                  {meLoading ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    userInitial
+                  )}
                 </div>
-                <div className="text-left overflow-hidden">
+                <div className="text-left overflow-hidden min-w-0">
                   <p className="text-xs font-bold text-white truncate">
-                    Admin User
+                    {meLoading ? "Loading..." : me?.name || "User"}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate">
-                    admin@ipcallbd.com
+                    {meLoading ? "..." : me?.email || ""}
                   </p>
+                  {!meLoading && me?.role && (
+                    <span
+                      className={`inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${getRoleBadgeColor(
+                        me.role
+                      )}`}
+                    >
+                      {getRoleLabel(me.role)}
+                    </span>
+                  )}
                 </div>
               </div>
-              <Link
-                href="/login"
-                className="text-slate-400 hover:text-rose-400 transition p-1.5 rounded-lg"
+              <button
+                onClick={handleLogout}
+                className="text-slate-400 hover:text-rose-400 transition p-1.5 rounded-lg shrink-0"
                 title="Logout"
               >
                 <LogOut className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* Main View Area */}
+        {/* Main Area */}
         <div className="lg:pl-64 flex-1 flex flex-col min-w-0">
           {/* Top Navbar */}
           <header className="h-16 bg-[#1e293b] border-b border-slate-700/80 sticky top-0 z-40 px-4 md:px-8 flex items-center justify-between shadow-sm">
@@ -315,94 +388,31 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex items-center space-x-3 md:space-x-4">
-              {/* Balance Display */}
               <BalanceDisplay />
 
-              {/* Notifications Dropdown */}
+              {/* Notifications (optional, keep as-is) */}
               <div className="relative" ref={notificationRef}>
-                <button
-                  onClick={() => setNotificationOpen(!notificationOpen)}
-                  className="relative p-2 text-slate-300 hover:text-white transition rounded-xl bg-slate-900 border border-slate-700/80 focus:outline-none"
-                >
-                  <Bell className="w-4 h-4" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-slate-900 animate-pulse" />
-                  )}
-                </button>
-
-                {/* Dropdown Menu */}
                 {notificationOpen && (
                   <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#1e293b] border border-slate-700/80 rounded-2xl shadow-xl shadow-slate-950/40 py-2 z-50">
-                    <div className="px-4 py-2.5 border-b border-slate-700/80 flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                          Notifications
-                        </h3>
-                        {unreadCount > 0 && (
-                          <span className="text-[10px] font-mono font-bold bg-primary/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full">
-                            {unreadCount} new
-                          </span>
-                        )}
-                      </div>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={markAllAsRead}
-                          className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition"
-                        >
-                          Mark all read
-                        </button>
-                      )}
+                    <div className="px-4 py-2.5 border-b border-slate-700/80">
+                      <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                        Notifications
+                      </h3>
                     </div>
-
-                    {/* Notifications List */}
-                    <div className="max-h-80 overflow-y-auto divide-y divide-slate-800/80">
-                      {notifications.length > 0 ? (
-                        notifications.map((item) => (
-                          <div
-                            key={item.id}
-                            onClick={() => markAsRead(item.id)}
-                            className={`p-3.5 flex items-start space-x-3 cursor-pointer transition ${
-                              !item.read
-                                ? "bg-slate-900/60 hover:bg-slate-900"
-                                : "hover:bg-slate-800/50"
-                            }`}
-                          >
-                            <div className="mt-0.5 shrink-0">{item.icon}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <p
-                                  className={`text-xs font-bold truncate ${
-                                    !item.read ? "text-white" : "text-slate-300"
-                                  }`}>
-                                  {item.title}
-                                </p>
-                                <span className="text-[10px] text-slate-500">
-                                  {item.time}
-                                </span>
-                              </div>
-                              <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2 leading-snug">
-                                {item.message}
-                              </p>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="py-8 text-center text-xs text-slate-500">
-                          No notifications right now.
-                        </div>
-                      )}
+                    <div className="py-6 text-center text-xs text-slate-500">
+                      No notifications right now.
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* User Profile Dropdown */}
+              {/* Profile Dropdown — 🆕 Real user data */}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center space-x-2 cursor-pointer p-1 rounded-xl hover:bg-slate-800/60 transition focus:outline-none"
                 >
-                  <UserInfo />
+                  <UserInfo me={me} />
                   <ChevronDown
                     className={`w-3.5 h-3.5 text-slate-400 hidden sm:block transition-transform duration-200 ${
                       dropdownOpen ? "rotate-180" : ""
@@ -410,28 +420,35 @@ export default function DashboardLayout({
                   />
                 </button>
 
-                {/* Dropdown Menu Container */}
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-[#1e293b] border border-slate-700/80 rounded-2xl shadow-xl shadow-slate-950/40 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-72 bg-[#1e293b] border border-slate-700/80 rounded-2xl shadow-xl shadow-slate-950/40 py-2 z-50">
+                    {/* Header with name, email, role */}
                     <div className="px-4 py-3 border-b border-slate-700/80">
-                      <p className="text-xs font-bold text-white truncate">
-                        Admin User
+                      <p className="text-sm font-bold text-white truncate">
+                        {me?.name || "User"}
                       </p>
                       <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                        admin@ipcallbd.com
+                        {me?.email || ""}
                       </p>
-                 
+                      {me?.role && (
+                        <span
+                          className={`inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${getRoleBadgeColor(
+                            me.role
+                          )}`}
+                        >
+                          <ShieldCheck className="w-3 h-3 inline mr-1" />
+                          {getRoleLabel(me.role)}
+                        </span>
+                      )}
+                      {me?.company_name && (
+                        <p className="text-xs text-slate-500 mt-2 truncate">
+                         <span className="text-white">Company name:</span>  {me.company_name}
+                        </p>
+                      )}
                     </div>
 
                     <div className="p-1.5 space-y-1">
-                      <Link
-                        href="/dashboard/settings"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition"
-                      >
-                        <User className="w-4 h-4 text-slate-400" />
-                        <span>View Profile</span>
-                      </Link>
+                    
 
                       <Link
                         href="/dashboard/settings"
@@ -444,14 +461,13 @@ export default function DashboardLayout({
                     </div>
 
                     <div className="p-1.5 border-t border-slate-700/80">
-                      <Link
-                        href="/login"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition"
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition"
                       >
                         <LogOut className="w-4 h-4 text-rose-400" />
                         <span>Log Out</span>
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -459,7 +475,7 @@ export default function DashboardLayout({
             </div>
           </header>
 
-          {/* Dynamic Page Content */}
+          {/* Page Content */}
           <main className="flex-1 p-4 md:p-8 bg-white overflow-y-auto">
             {children}
           </main>

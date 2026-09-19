@@ -26,7 +26,6 @@ export default function UsersPage() {
 
   const router = useRouter();
 
-  // Get current user from /auth/me endpoint
   const {
     data: currentUser,
     isLoading: isUserLoading,
@@ -35,11 +34,15 @@ export default function UsersPage() {
 
   // Get all users
   const {
-    data: users = [],
+    data: usersResponse,
     isLoading: isUsersLoading,
     error: usersError,
     refetch,
   } = useGetAllUsersQuery({});
+
+  const users: any[] = Array.isArray(usersResponse)
+    ? usersResponse
+    : (usersResponse?.users ?? usersResponse?.data ?? []);
 
   // Use register mutation for creating users
   const [register, { isLoading: isCreating }] = useRegisterMutation();
@@ -48,7 +51,7 @@ export default function UsersPage() {
   const isSuperAdmin = currentUser?.role === "super_admin";
 
   // Filter users based on search
-  const filteredUsers = users.filter(
+  const filteredUsers = users?.filter(
     (user: { name: any; email: any; company_name: any }) =>
       `${user.name} ${user.email} ${user.company_name || ""}`
         .toLowerCase()
