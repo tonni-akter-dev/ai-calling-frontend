@@ -87,7 +87,7 @@ export default function CreateCampaignPage() {
 
   useEffect(() => {
     loadLogs();
-    const id = setInterval(loadLogs, 5000);
+    const id = setInterval(loadLogs, 30000);
     return () => clearInterval(id);
   }, [loadLogs]);
 
@@ -101,7 +101,6 @@ export default function CreateCampaignPage() {
 
     setIsLaunching(true);
     try {
-      // STEP 1: register voice URL
       const regRes = await fetch(`${API_BASE}/voice-files/register-url`, {
         method: "POST",
         credentials: "include",

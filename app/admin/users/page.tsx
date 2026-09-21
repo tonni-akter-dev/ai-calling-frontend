@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Eye, Plus, X } from "lucide-react";
+import { Search, Eye, Plus, X, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   useGetAllUsersQuery,
@@ -26,13 +26,16 @@ export default function UsersPage() {
 
   const router = useRouter();
 
+  /* =========================================================
+     QUERIES
+  ========================================================= */
+
   const {
     data: currentUser,
     isLoading: isUserLoading,
     error: userError,
   } = useGetMeQuery({});
 
-  // Get all users
   const {
     data: usersResponse,
     isLoading: isUsersLoading,
@@ -42,85 +45,100 @@ export default function UsersPage() {
 
   const users: any[] = Array.isArray(usersResponse)
     ? usersResponse
-    : (usersResponse?.users ?? usersResponse?.data ?? []);
+    : usersResponse?.users ?? usersResponse?.data ?? [];
 
-  // Use register mutation for creating users
+  /* =========================================================
+     REGISTER MUTATION
+  ========================================================= */
+
   const [register, { isLoading: isCreating }] = useRegisterMutation();
 
-  // Check if user is super_admin
   const isSuperAdmin = currentUser?.role === "super_admin";
 
-  // Filter users based on search
-  const filteredUsers = users?.filter(
-    (user: { name: any; email: any; company_name: any }) =>
-      `${user.name} ${user.email} ${user.company_name || ""}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+  /* =========================================================
+     FILTER
+  ========================================================= */
+
+  const filteredUsers = users?.filter((user: any) =>
+    `${user.name} ${user.email} ${user.company_name || ""}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   );
 
-  const handleInputChange = (e: { target: { name: any; value: any } }) => {
+  /* =========================================================
+     FORM HANDLERS
+  ========================================================= */
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setFormError("");
     setSuccessMessage("");
   };
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormError("");
+    setSuccessMessage("");
+    setFormData({ name: "", email: "", password: "", companyName: "" });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
     setSuccessMessage("");
 
-    // Validate form
+    // Validation
     if (
-      !formData.name ||
-      !formData.email ||
+      !formData.name.trim() ||
+      !formData.email.trim() ||
       !formData.password ||
-      !formData.companyName
+      !formData.companyName.trim()
     ) {
       setFormError("All fields are required");
       return;
     }
 
-    // Validate password length
     if (formData.password.length < 6) {
       setFormError("Password must be at least 6 characters");
       return;
     }
 
     try {
-      // Using the register API to create a new user
       const result = await register({
         data: {
-          name: formData.name,
-          email: formData.email,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
           password: formData.password,
-          companyName: formData.companyName,
+          companyName: formData.companyName.trim(),
         },
       }).unwrap();
-      console.log(result);
+
+      console.log("User created:", result);
       setSuccessMessage(`User "${formData.name}" created successfully!`);
 
       // Reset form
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        companyName: "",
-      });
+      setFormData({ name: "", email: "", password: "", companyName: "" });
 
-      // Refresh user list after short delay
+      // Refetch + close after 1.2s
       setTimeout(() => {
         refetch();
-        setIsModalOpen(false);
-        setSuccessMessage("");
-      }, 1500);
-    } catch (err) {
-      const error = err as { data?: { error?: string } };
-      setFormError(error.data?.error || "Failed to create user");
+        closeModal();
+      }, 1200);
+    } catch (err: any) {
+      const message =
+        err?.data?.error ||
+        err?.data?.message ||
+        err?.message ||
+        "Failed to create user";
+      setFormError(message);
     }
   };
 
-  // Loading state
+  /* =========================================================
+     LOADING
+  ========================================================= */
+
   if (isUserLoading || isUsersLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -132,15 +150,17 @@ export default function UsersPage() {
     );
   }
 
-  // Error states
+  /* =========================================================
+     ERRORS
+  ========================================================= */
+
   if (userError) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
           <p>
             Authentication error:{" "}
-            {(userError as { data?: { error?: string } })?.data?.error ||
-              "Please login again"}
+            {(userError as any)?.data?.error || "Please login again"}
           </p>
           <button
             onClick={() => {
@@ -162,16 +182,22 @@ export default function UsersPage() {
         <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl">
           <p>
             Error loading users:{" "}
-            {(usersError as { data?: { error?: string } })?.data?.error ||
-              "Something went wrong"}
+            {(usersError as any)?.data?.error || "Something went wrong"}
           </p>
         </div>
       </div>
     );
   }
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* ===================================================
+          HEADER + ADD BUTTON
+      =================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Users</h1>
@@ -185,7 +211,7 @@ export default function UsersPage() {
           )}
         </div>
 
-        {isSuperAdmin && (
+        {/* {isSuperAdmin && ( */}
           <button
             onClick={() => setIsModalOpen(true)}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
@@ -193,9 +219,12 @@ export default function UsersPage() {
             <Plus className="h-4 w-4" />
             Add New User
           </button>
-        )}
+        {/* )} */}
       </div>
 
+      {/* ===================================================
+          USERS TABLE
+      =================================================== */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 p-5">
           <div className="relative max-w-md">
@@ -245,93 +274,91 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map(
-                  (user: {
-                    id: any;
-                    name: any;
-                    email: any;
-                    company_name: any;
-                    role: any;
-                    subscription_status: any;
-                  }) => (
-                    <tr
-                      key={user.id}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
-                    >
-                      <td className="px-5 py-4">
-                        <p className="text-sm font-semibold text-slate-800">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-slate-400">{user.email}</p>
-                      </td>
-                      <td className="px-5 py-4 text-sm text-slate-600">
-                        {user.company_name || "N/A"}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            user.role === "super_admin"
-                              ? "bg-purple-100 text-purple-700"
-                              : user.role === "admin"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            user.subscription_status === "active"
-                              ? "bg-green-100 text-green-700"
+                filteredUsers.map((user: any) => (
+                  <tr
+                    key={user.id}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                  >
+                    <td className="px-5 py-4">
+                      <p className="text-sm font-semibold text-slate-800">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-400">{user.email}</p>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-slate-600">
+                      {user.company_name || "N/A"}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                          user.role === "super_admin"
+                            ? "bg-purple-100 text-purple-700"
+                            : user.role === "admin"
+                              ? "bg-blue-100 text-blue-700"
                               : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {user.subscription_status || "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="text-xs font-semibold text-emerald-600">
-                          ● Active
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <Link
-                          href={`/admin/subscriptions/${user.id}`}
-                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-primary"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ),
-                )
+                        }`}
+                      >
+                        {String(user.role || "").replace("_", " ")}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
+                          user.subscription_status === "active"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {user.subscription_status || "Inactive"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-xs font-semibold text-emerald-600">
+                        ● Active
+                      </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <Link
+                        href={`/admin/subscriptions/${user.id}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-primary"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        Details
+                      </Link>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Create User Modal */}
+      {/* ===================================================
+          ADD NEW USER MODAL
+      =================================================== */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 bg-opacity-50 p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeModal();
+          }}
+        >
           <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl">
+            {/* HEADER */}
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
-              <h2 className="text-xl font-bold text-slate-900">Add New User</h2>
+              <h2 className="text-xl font-bold text-slate-900">
+                Add New User
+              </h2>
               <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setFormError("");
-                  setSuccessMessage("");
-                }}
+                onClick={closeModal}
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
+            {/* FORM */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {formError && (
                 <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -408,21 +435,25 @@ export default function UsersPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setFormError("");
-                    setSuccessMessage("");
-                  }}
-                  className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                  onClick={closeModal}
+                  disabled={isCreating}
+                  className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="flex-1 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-70"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-70"
                 >
-                  {isCreating ? "Creating..." : "Create User"}
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create User"
+                  )}
                 </button>
               </div>
             </form>

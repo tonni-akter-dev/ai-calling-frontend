@@ -78,7 +78,7 @@ export default function LoginPage() {
         router.push("/admin");
       } else if (userRole === "admin") {
         // Admin redirects to /admin as well
-        router.push("/admin");
+        router.push("/dashboard");
       } else {
         // Regular users redirect to /dashboard
         router.push("/dashboard");

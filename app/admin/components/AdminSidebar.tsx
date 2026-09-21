@@ -18,8 +18,6 @@ import {
 } from "lucide-react";
 import { menu } from "@/app/utils/data";
 
-
-
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -83,22 +81,22 @@ export default function AdminSidebar() {
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-5">
-            <div className="mb-6">
-              <div className="space-y-1">
-                {menu.map((item) => {
-                  const Icon = item.icon;
-                  const active =
-                    item.href === "/admin"
-                      ? pathname === "/admin"
-                      : pathname === item.href ||
-                        pathname.startsWith(`${item.href}/`);
+          <div className="mb-6">
+            <div className="space-y-1">
+              {menu.map((item) => {
+                const Icon = item.icon;
+                const active =
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`);
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={`
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`
                         flex items-center gap-3
                         rounded-lg
                         px-3 py-2.5
@@ -111,21 +109,21 @@ export default function AdminSidebar() {
                             ? "bg-primary text-white shadow-md shadow-primary/20"
                             : "text-slate-300 hover:bg-slate-800 hover:text-white"
                         }
-                      `}>
-                      <Icon
-                        className={`
+                      `}
+                  >
+                    <Icon
+                      className={`
                           h-4.25 w-4.25
                           ${active ? "text-white" : "text-slate-400"}
                         `}
-                      />
+                    />
 
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
-          
+          </div>
         </div>
 
         {/* Bottom Logout */}
