@@ -48,7 +48,7 @@ export default function UsersPage() {
     : usersResponse?.users ?? usersResponse?.data ?? [];
 
   /* =========================================================
-     REGISTER MUTATION
+     REGISTER MUTATION (as-is)
   ========================================================= */
 
   const [register, { isLoading: isCreating }] = useRegisterMutation();
@@ -120,9 +120,11 @@ export default function UsersPage() {
       // Reset form
       setFormData({ name: "", email: "", password: "", companyName: "" });
 
-      // Refetch + close after 1.2s
+      // ✅ Refetch users list → new user appear হবে
+      refetch();
+
+      // Close modal after 1.2s
       setTimeout(() => {
-        refetch();
         closeModal();
       }, 1200);
     } catch (err: any) {

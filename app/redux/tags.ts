@@ -10,6 +10,7 @@ export const tags = {
   wallet: "Wallet",
   settings: "Settings",
   contactMessages: "ContactMessages",
+  me:"Me"
 } as const;
 
 export type Tag = (typeof tags)[keyof typeof tags];

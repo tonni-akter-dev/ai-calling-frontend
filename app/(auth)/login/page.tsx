@@ -28,74 +28,104 @@ export default function LoginPage() {
 
   const [login, { isLoading }] = useLoginMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!formData.username.trim()) {
-      toast.error("Please enter your username or email.");
-      return;
+  if (!formData.username.trim()) {
+    toast.error("Please enter your username or email.");
+    return;
+  }
+
+  if (!formData.password) {
+    toast.error("Please enter your password.");
+    return;
+  }
+
+  try {
+    const response = await login({
+      data: {
+        email: formData.username.trim(),
+        password: formData.password,
+      },
+    }).unwrap();
+
+    console.log("Login response:", response);
+
+    if (response?.token) {
+      Cookies.set("accessToken", response.token, {
+        expires: 7,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
     }
 
-    if (!formData.password) {
-      toast.error("Please enter your password.");
-      return;
+    if (response?.user) {
+      Cookies.set("user", JSON.stringify(response.user), {
+        expires: 7,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
     }
 
-    try {
-      const response = await login({
-        data: {
-          email: formData.username.trim(),
-          password: formData.password,
-        },
-      }).unwrap();
+    toast.success(response?.message || "Login successful!");
 
-      console.log("Login response:", response);
+    const userRole = response?.user?.role;
 
-      if (response?.token) {
-        Cookies.set("accessToken", response.token, {
-          expires: 7,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-        });
-      }
-
-      if (response?.user) {
-        Cookies.set(
-          "user",
-          JSON.stringify(response.user),
-          {
-            expires: 7,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-          }
-        );
-      }
-      toast.success(response?.message || "Login successful!");
-      const userRole = response?.user?.role;
-
-      if (userRole === "super_admin") {
-        // Super Admin redirects to /admin
-        router.push("/admin");
-      } else if (userRole === "admin") {
-        // Admin redirects to /admin as well
-        router.push("/dashboard");
-      } else {
-        // Regular users redirect to /dashboard
-        router.push("/dashboard");
-      }
-
-    } catch (error: any) {
-      console.error("Login error:", error);
-
-      const errorMessage =
-        error?.data?.error ||
-        error?.data?.message ||
-        error?.error ||
-        "Invalid email or password.";
-
-      toast.error(errorMessage);
+    if (userRole === "super_admin") {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
     }
-  };
+  } catch (error: any) {
+    // 🔍 Full error console এ দেখুন
+    console.error("Login error (full):", error);
+    console.error("Error status:", error?.status);
+    console.error("Error data:", error?.data);
+
+    // 🎯 Error message extract করার improved logic
+    let errorMessage = "Invalid email or password.";
+
+    if (typeof error === "string") {
+      errorMessage = error;
+    } else if (error?.data) {
+      // Backend response body থেকে message নিন
+      errorMessage =
+        error.data.error ||
+        error.data.message ||
+        error.data.msg ||
+        error.data.errors?.[0]?.message ||
+        (typeof error.data === "string" ? error.data : null) ||
+        errorMessage;
+    } else if (error?.error) {
+      // RTK Query network/FETCH_ERROR
+      errorMessage =
+        error.error === "FETCH_ERROR"
+          ? "Cannot connect to server. Please check your internet or backend."
+          : error.error === "TIMEOUT_ERROR"
+          ? "Request timeout. Server is not responding."
+          : error.error === "PARSING_ERROR"
+          ? "Server returned invalid response."
+          : error.error;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    }
+
+    // Status code অনুযায়ী custom message
+    if (error?.status === 401) {
+      errorMessage = errorMessage || "Invalid credentials. Please try again.";
+    } else if (error?.status === 500) {
+      errorMessage =
+        errorMessage || "Server error. Please try again later.";
+    } else if (error?.status === "FETCH_ERROR") {
+      errorMessage =
+        "⚠️ Cannot reach backend. Check your API URL / CORS / Node app status.";
+    }
+
+    toast.error(errorMessage, {
+      duration: 5000, 
+    });
+  }
+};
 
   return (
     <div className="min-h-screen w-full bg-[#070d1e] flex items-center justify-center p-4 relative overflow-hidden font-sans antialiased">

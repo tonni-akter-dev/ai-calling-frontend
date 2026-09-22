@@ -35,7 +35,7 @@ interface UserRow {
 ========================================================= */
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  process.env.NEXT_PUBLIC_API_URL;
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
