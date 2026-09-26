@@ -217,7 +217,7 @@ export default function CreateCampaignPage() {
               Create Voice Campaign
             </h1>
             <p className="mt-1 text-sm text-slate-500">
-              Upload voice and launch bulk IP Call BD calls
+              Upload voice and launch bulk AI Call BD calls
             </p>
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function CreateCampaignPage() {
                 Live Call Logs
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Real-time status from IP Call BD
+                Real-time status from AI Call BD
               </p>
             </div>
             <div className="flex items-center gap-3">

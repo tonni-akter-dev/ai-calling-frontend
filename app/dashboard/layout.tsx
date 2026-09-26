@@ -235,6 +235,7 @@ export default function DashboardLayout({
       href: "/dashboard/all-call-logs",
       icon: ListOrdered,
     },
+    { name: "IVR Management", href: "/dashboard/ivr-manament", icon: CreditCard },
     { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
     { name: "Credit", href: "/dashboard/credit", icon: Wallet },
     {

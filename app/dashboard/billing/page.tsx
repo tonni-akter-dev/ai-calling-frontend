@@ -305,7 +305,7 @@ export default function BillingPage() {
               {/* Vendor Info */}
               <div className="col-span-12 md:col-span-4 print:col-span-4 space-y-0.5 pt-0 md:pt-10 print:pt-10">
                 <span className="font-bold text-slate-900">From:</span>
-                <p className="font-bold text-slate-900">IP Call BD</p>
+                <p className="font-bold text-slate-900">AI Call BD</p>
                 <p className="text-slate-700">House No. 409/1 (1st Floor)</p>
                 <p className="text-slate-700">South Monipur, Kazipara</p>
                 <p className="text-slate-700">Mirpur-12, Dhaka-1216, Bangladesh</p>

@@ -27,14 +27,14 @@ export interface ContactListResponse {
 
 // ============================================
 // Voice File Types
-// (IP Call BD + DB save)
+// (AI Call BD + DB save)
 // ============================================
 export interface VoiceFile {
   id: string;              // cuid (DB primary key)
   userId: string;
   name: string;            // voice_name
   audioUrl: string;        // public audio URL
-  campaignId: string;      // IP Call BD campaign_id (v14_xxxxx)
+  campaignId: string;      // AI Call BD campaign_id (v14_xxxxx)
   format: string;          // MP3 / WAV / OGG / AUDIO
   createdAt: string;
   updatedAt: string;
@@ -49,7 +49,7 @@ export interface VoiceFileResponse {
 export interface UploadVoiceFileResponse {
   status: "success" | "error";
   data?: VoiceFile;
-  campaign_id?: string;    // IP Call BD থেকে পাওয়া
+  campaign_id?: string;    // AI Call BD থেকে পাওয়া
   message?: string;
 }
 
