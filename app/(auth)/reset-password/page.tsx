@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
-import ResetPassword from './ResetClient'; // Apnar component er path
+import ResetPassword from './ResetClient'; 
 
-// Ekta simple loading spinner fallback banan (apnar dark theme er sathe match kore)
 const LoadingFallback = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-[#070d1e]">
     <div className="flex flex-col items-center gap-4">

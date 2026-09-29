@@ -229,9 +229,7 @@ const ResetPassword = () => {
 
           <div className="text-center">
             <h1 className="text-2xl font-semibold tracking-tight text-white">Set a new password</h1>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
-              Notun ekta strong password din.
-            </p>
+            
           </div>
 
           {serverError && (

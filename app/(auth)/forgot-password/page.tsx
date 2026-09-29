@@ -195,7 +195,7 @@ const ForgetPassword = () => {
                     {isLoading ? (
                       <>
                         <Spinner />
-                        Link toiri hocche…
+                        Creating link
                       </>
                     ) : (
                       "Get reset link"
