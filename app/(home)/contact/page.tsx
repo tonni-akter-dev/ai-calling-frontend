@@ -15,7 +15,6 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import emailjs from "@emailjs/browser";
 import { toast } from "sonner";
 
 export default function ContactPage() {
@@ -26,10 +25,6 @@ export default function ContactPage() {
     companyName: "",
     phone: "",
     email: "",
-    businessType: "",
-    teamSize: "",
-    monthlyCallVolume: "",
-    interestedService: "",
     message: "",
   });
 
@@ -52,45 +47,44 @@ export default function ContactPage() {
     setSubmitStatus(null);
 
     try {
-      const serviceID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!;
-      const templateID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!;
-      const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!;
-
-      const response = await emailjs.send(
-        serviceID,
-        templateID,
-        formData,
-        publicKey
+      // 🔁 Send to backend — backend uses Resend to email admin
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/enquiry`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
       );
 
-      if (response.status === 200) {
-        setSubmitStatus({
-          type: "success",
-          text: "Thank you. Your request has been received. Our team will review your requirements and contact you shortly.",
-        });
-        toast.success("Request submitted successfully!", {
-          description: "Our team will contact you shortly.",
-        });
+      const data = await res.json();
 
-        setFormData({
-          fullName: "",
-          companyName: "",
-          phone: "",
-          email: "",
-          businessType: "",
-          teamSize: "",
-          monthlyCallVolume: "",
-          interestedService: "",
-          message: "",
-        });
-      } else {
-        throw new Error("Failed to send message");
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to send message");
       }
+
+      // setSubmitStatus({
+      //   type: "success",
+      //   text: "Thank you. Your request has been received. Our team will review your requirements and contact you shortly.",
+      // });
+      toast.success("Request submitted successfully!", {
+        description: "Our team will contact you shortly.",
+      });
+
+      setFormData({
+        fullName: "",
+        companyName: "",
+        phone: "",
+        email: "",
+        message: "",
+      });
     } catch (error: any) {
-      console.error("EmailJS Error:", error);
+      console.error("Contact form error:", error);
       setSubmitStatus({
         type: "error",
-        text: "Failed to send your request. Please try again later.",
+        text:
+          error.message ||
+          "Failed to send your request. Please try again later.",
       });
     } finally {
       setIsSubmitting(false);
@@ -99,7 +93,6 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans antialiased text-slate-800">
-      
       {/* ==================== HERO BANNER ==================== */}
       <section className="relative bg-[#0b1329] text-white pt-40 pb-28 text-center overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
@@ -113,10 +106,8 @@ export default function ContactPage() {
 
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-5 leading-[1.15]">
             Let's Build a Better{" "}
-            <span className="text-orange-500">
-              Communication System
-            </span>{" "}
-            for Your Business
+            <span className="text-orange-500">Communication System</span> for
+            Your Business
           </h1>
           <p className="text-slate-300 text-sm md:text-base max-w-2xl mx-auto font-normal leading-relaxed">
             Tell us what your business needs. Our team can help you choose
@@ -129,7 +120,6 @@ export default function ContactPage() {
       {/* ==================== FLOATING CONTACT CARDS ==================== */}
       <section className="relative -mt-16 z-20 max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          
           {/* Phone */}
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xl shadow-slate-200/50 text-center flex flex-col items-center justify-between space-y-4 hover:-translate-y-1 transition duration-200">
             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-primary flex items-center justify-center">
@@ -213,7 +203,6 @@ export default function ContactPage() {
       {/* ==================== MAIN FORM & SIDEBAR ==================== */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 grid lg:grid-cols-12 gap-8 items-start">
-          
           {/* Left Column: Lead Form */}
           <div className="lg:col-span-7 bg-white rounded-3xl p-8 md:p-10 border border-slate-100 shadow-md">
             <h2 className="text-2xl font-extrabold text-primary mb-2 tracking-tight">
@@ -225,7 +214,6 @@ export default function ContactPage() {
             </p>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
-              
               {/* Row 1: Full Name + Company Name */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
@@ -290,96 +278,6 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Row 3: Business Type + Team Size */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    Business Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="businessType"
-                    value={formData.businessType}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition bg-white"
-                    required
-                  >
-                    <option value="">Select business type</option>
-                    <option value="E-commerce">E-commerce</option>
-                    <option value="Healthcare">Healthcare</option>
-                    <option value="Real Estate">Real Estate</option>
-                    <option value="Education">Education</option>
-                    <option value="Courier & Delivery">Courier & Delivery</option>
-                    <option value="Corporate">Corporate</option>
-                    <option value="Call Center">Call Center</option>
-                    <option value="Service Business">Service Business</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    Team Size
-                  </label>
-                  <select
-                    name="teamSize"
-                    value={formData.teamSize}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition bg-white"
-                  >
-                    <option value="">Select team size</option>
-                    <option value="1-5">1-5 employees</option>
-                    <option value="6-20">6-20 employees</option>
-                    <option value="21-50">21-50 employees</option>
-                    <option value="51-100">51-100 employees</option>
-                    <option value="100+">100+ employees</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 4: Monthly Call Volume + Interested Service */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    Estimated Monthly Call Volume
-                  </label>
-                  <select
-                    name="monthlyCallVolume"
-                    value={formData.monthlyCallVolume}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition bg-white"
-                  >
-                    <option value="">Select estimated volume</option>
-                    <option value="Under 1,000">Under 1,000 calls</option>
-                    <option value="1,000 - 5,000">1,000 - 5,000 calls</option>
-                    <option value="5,000 - 20,000">5,000 - 20,000 calls</option>
-                    <option value="20,000 - 50,000">20,000 - 50,000 calls</option>
-                    <option value="50,000+">50,000+ calls</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    Interested Service <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="interestedService"
-                    value={formData.interestedService}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition bg-white"
-                    required
-                  >
-                    <option value="">Select a service</option>
-                    <option value="Cloud PBX">Cloud PBX</option>
-                    <option value="IP Number">IP Number</option>
-                    <option value="Bulk Voice">Bulk Voice</option>
-                    <option value="Call Recording">Call Recording</option>
-                    <option value="Caller Tune">Caller Tune</option>
-                    <option value="Call Center Solution">Call Center Solution</option>
-                    <option value="Custom Enterprise Solution">
-                      Custom Enterprise Solution
-                    </option>
-                  </select>
-                </div>
-              </div>
-
               {/* Message */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-2">
@@ -432,7 +330,6 @@ export default function ContactPage() {
 
           {/* Right Column: Office Card + Quick Help */}
           <div className="lg:col-span-5 space-y-6" id="office-address">
-            
             {/* Office Card */}
             <div className="bg-[#0b1329] text-white rounded-3xl p-8 border border-slate-800 shadow-xl space-y-4">
               <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
