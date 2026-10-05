@@ -54,16 +54,16 @@ const handleSubmit = async (e: React.FormEvent) => {
     if (response?.token) {
       Cookies.set("accessToken", response.token, {
         expires: 7,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+         secure: true,
+        sameSite: "none",
       });
     }
 
     if (response?.user) {
       Cookies.set("user", JSON.stringify(response.user), {
         expires: 7,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+         secure: true,
+        sameSite: "none",
       });
     }
 

@@ -23,12 +23,12 @@ export function getUser<T = any>(): T | null {
 export function setAuth(token: string, user: any) {
   Cookies.set(TOKEN_KEY, token, {
     expires: 7,
-    sameSite: "lax",
+    sameSite: "none",
     path: "/",
   });
   Cookies.set(USER_KEY, JSON.stringify(user), {
     expires: 7,
-    sameSite: "lax",
+    sameSite: "none",
     path: "/",
   });
 }
