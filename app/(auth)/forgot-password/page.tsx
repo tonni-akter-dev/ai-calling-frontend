@@ -11,9 +11,10 @@ const MailIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
-const LockIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
+const MailCheckIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 13.5l2 2 4-4" />
   </svg>
 );
 
@@ -29,12 +30,6 @@ const ArrowLeftIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-const ArrowRightIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-  </svg>
-);
-
 const Spinner = ({ className = "w-5 h-5" }: { className?: string }) => (
   <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -42,18 +37,11 @@ const Spinner = ({ className = "w-5 h-5" }: { className?: string }) => (
   </svg>
 );
 
-/* ---------------- Types ---------------- */
-interface ResetData {
-  email: string;
-  resetUrl: string;
-  expiresInMinutes: number;
-}
-
 /* ---------------- Page ---------------- */
 const ForgetPassword = () => {
   const [email, setEmail] = useState<string>("");
   const [fieldError, setFieldError] = useState<string>("");
-  const [resetData, setResetData] = useState<ResetData | null>(null);
+  const [sent, setSent] = useState<boolean>(false);
 
   const [forgotPassword, { isLoading, error, reset }] = useForgotPasswordMutation();
 
@@ -77,15 +65,10 @@ const ForgetPassword = () => {
     if (v) return;
 
     try {
-      const response = await forgotPassword({
+      await forgotPassword({
         data: { email: email.trim().toLowerCase() },
       }).unwrap();
-
-      setResetData({
-        email: email.trim().toLowerCase(),
-        resetUrl: response.resetUrl,
-        expiresInMinutes: response.expiresInMinutes || 30,
-      });
+      setSent(true);
     } catch {
       // Error handled via RTK Query state
     }
@@ -102,42 +85,52 @@ const ForgetPassword = () => {
           <div className="p-8 sm:p-10">
             {/* Icon */}
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400 ring-1 ring-indigo-500/20">
-              <LockIcon />
+              {sent ? <MailCheckIcon /> : <MailIcon className="w-7 h-7" />}
             </div>
 
-            {resetData ? (
-              /* ---------------- SUCCESS + LINK SHOWN HERE ---------------- */
+            {sent ? (
+              /* ---------------- EMAIL SENT STATE ---------------- */
               <div className="text-center">
-               
-                <h1 className="text-2xl font-semibold tracking-tight text-white">Reset link ready</h1>
+                <h1 className="text-2xl font-semibold tracking-tight text-white">
+                  Check your email
+                </h1>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  Account peye gechi <span className="font-medium text-slate-200">{resetData.email}</span> er jonno.
-                  Niche button e click kore notun password set korun.
+                  We&apos;ve sent a password reset link to{" "}
+                  <span className="font-medium text-slate-200">
+                    {email.trim().toLowerCase()}
+                  </span>
+                  . Please check your inbox (and spam folder) and click the link to set a new
+                  password.
                 </p>
 
-                {/* BIG RESET BUTTON (Using <a> because resetUrl is an absolute URL) */}
-                <a
-                  href={resetData.resetUrl}
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#0b1224]"
-                >
-                  Set New Password
-                  <ArrowRightIcon />
-                </a>
-
                 {/* Expiry note */}
-                <div className="mt-4 rounded-xl bg-amber-500/10 p-3.5 ring-1 ring-amber-500/20">
+                <div className="mt-6 rounded-xl bg-amber-500/10 p-3.5 ring-1 ring-amber-500/20">
                   <p className="text-xs leading-relaxed text-amber-400">
-                    This link is valid for <strong>{resetData.expiresInMinutes} minute</strong>
+                    The link will expire in <strong>30 minutes</strong>.
                   </p>
                 </div>
+
+                {/* Retry link */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSent(false);
+                    setEmail("");
+                  }}
+                  className="mt-5 text-sm font-medium text-indigo-400 transition hover:text-indigo-300"
+                >
+                  Didn&apos;t get the email? Try again
+                </button>
               </div>
             ) : (
               /* ---------------- FORM STATE ---------------- */
               <>
                 <div className="text-center">
-                  <h1 className="text-2xl font-semibold tracking-tight text-white">Forgot your password?</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight text-white">
+                    Forgot your password?
+                  </h1>
                   <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                    Account er email din, sathe sathe reset link peye jaben.
+                    Enter your account email and we&apos;ll send you a reset link.
                   </p>
                 </div>
 
@@ -195,10 +188,10 @@ const ForgetPassword = () => {
                     {isLoading ? (
                       <>
                         <Spinner />
-                        Creating link
+                        Sending link
                       </>
                     ) : (
-                      "Get reset link"
+                      "Send reset link"
                     )}
                   </button>
                 </form>
