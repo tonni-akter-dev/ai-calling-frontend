@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -274,7 +275,7 @@ export default function CampaignsPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1200px]">
+          <table className="w-full min-w-300">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70">
                 <TableHead>Campaign</TableHead>

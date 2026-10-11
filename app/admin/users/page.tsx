@@ -46,7 +46,7 @@ export default function UsersPage() {
 
   const users: any[] = Array.isArray(usersResponse)
     ? usersResponse
-    : usersResponse?.users ?? usersResponse?.data ?? [];
+    : (usersResponse?.users ?? usersResponse?.data ?? []);
 
   /* =========================================================
      REGISTER MUTATION (as-is)
@@ -215,13 +215,13 @@ export default function UsersPage() {
         </div>
 
         {/* {isSuperAdmin && ( */}
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-          >
-            <Plus className="h-4 w-4" />
-            Add New User
-          </button>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        >
+          <Plus className="h-4 w-4" />
+          Add New User
+        </button>
         {/* )} */}
       </div>
 
@@ -260,9 +260,7 @@ export default function UsersPage() {
                 <th className="px-5 py-3 text-left text-[10px] font-bold uppercase text-slate-400">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-[10px] font-bold uppercase text-slate-400">
-                  Action
-                </th>
+               
               </tr>
             </thead>
 
@@ -320,15 +318,7 @@ export default function UsersPage() {
                         ● Active
                       </span>
                     </td>
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/admin/subscriptions/${user.id}`}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-primary"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Details
-                      </Link>
-                    </td>
+
                   </tr>
                 ))
               )}
@@ -350,9 +340,7 @@ export default function UsersPage() {
           <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl">
             {/* HEADER */}
             <div className="flex items-center justify-between border-b border-slate-100 p-6">
-              <h2 className="text-xl font-bold text-slate-900">
-                Add New User
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900">Add New User</h2>
               <button
                 onClick={closeModal}
                 className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"

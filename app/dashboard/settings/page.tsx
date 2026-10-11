@@ -16,7 +16,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
-import { authHeaders } from "@/app/lib/authToken";
+import { authHeaders, jsonHeaders } from "@/app/lib/authToken";
 import Cookies from "js-cookie";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
@@ -117,7 +117,7 @@ export default function SettingsPage() {
       const res = await fetch(`${API_BASE}/auth/update-profile`, {
         method: "PUT",
         credentials: "include",
-        headers: authHeaders(),
+        headers: jsonHeaders(),
         body: JSON.stringify({
           name: formData.name.trim(),
           phone: formData.phone.trim() || null,

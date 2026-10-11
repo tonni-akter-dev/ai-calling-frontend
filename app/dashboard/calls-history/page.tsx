@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  Ban,
 } from "lucide-react";
 import { authHeaders } from "@/app/lib/authToken";
 
@@ -86,12 +87,16 @@ export default function CallsHistoryPage() {
     return () => clearInterval(id);
   }, [load]);
 
+  // ============================================================
+  // Status Badge — ePBX + legacy
+  // ============================================================
   const statusBadge = (status: string) => {
     const s = status?.toLowerCase();
     const config: Record<
       string,
       { cls: string; icon: React.ReactNode; label: string }
     > = {
+      // ─── Answered / Completed ──────────────────────
       completed: {
         cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
         icon: <CheckCircle2 className="w-3 h-3" />,
@@ -102,6 +107,30 @@ export default function CallsHistoryPage() {
         icon: <CheckCircle2 className="w-3 h-3" />,
         label: "Answered",
       },
+      // ─── ePBX: Confirmed (pressed 1) ───────────────
+      confirmed: {
+        cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        label: "Confirmed",
+      },
+      // ─── ePBX: Rejected (pressed 2) ────────────────
+      rejected: {
+        cls: "bg-amber-50 text-amber-700 border-amber-200",
+        icon: <Ban className="w-3 h-3" />,
+        label: "Rejected",
+      },
+      // ─── ePBX: No Response (call received, no press)
+      "no-response": {
+        cls: "bg-blue-50 text-blue-700 border-blue-200",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        label: "No Response",
+      },
+      noresponse: {
+        cls: "bg-blue-50 text-blue-700 border-blue-200",
+        icon: <CheckCircle2 className="w-3 h-3" />,
+        label: "No Response",
+      },
+      // ─── In progress ───────────────────────────────
       ringing: {
         cls: "bg-purple-50 text-purple-700 border-purple-200",
         icon: <Loader2 className="w-3 h-3 animate-spin" />,
@@ -112,6 +141,12 @@ export default function CallsHistoryPage() {
         icon: <Clock className="w-3 h-3" />,
         label: "Queued",
       },
+      "in-progress": {
+        cls: "bg-purple-50 text-purple-700 border-purple-200",
+        icon: <Loader2 className="w-3 h-3 animate-spin" />,
+        label: "In Progress",
+      },
+      // ─── Failures ──────────────────────────────────
       failed: {
         cls: "bg-rose-50 text-rose-700 border-rose-200",
         icon: <XCircle className="w-3 h-3" />,
@@ -123,6 +158,11 @@ export default function CallsHistoryPage() {
         label: "Busy",
       },
       "no-answer": {
+        cls: "bg-amber-50 text-amber-700 border-amber-200",
+        icon: <AlertCircle className="w-3 h-3" />,
+        label: "No Answer",
+      },
+      noanswer: {
         cls: "bg-amber-50 text-amber-700 border-amber-200",
         icon: <AlertCircle className="w-3 h-3" />,
         label: "No Answer",
@@ -225,6 +265,9 @@ export default function CallsHistoryPage() {
                 </option>
                 <option value="completed" className="text-slate-900">
                   Completed
+                </option>
+                <option value="rejected" className="text-slate-900">
+                  Rejected
                 </option>
                 <option value="failed" className="text-slate-900">
                   Failed
